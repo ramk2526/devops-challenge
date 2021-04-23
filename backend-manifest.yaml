@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-service
+spec:
+  selector:
+    matchLabels:
+      app: backend-service
+  template:
+    metadata:
+      labels:
+        app: backend-service
+    spec:
+      terminationGracePeriodSeconds: 5
+      initContainers:
+      - name: init-db
+        image: busybox
+        command: ['sh', '-c', 'until nslookup database; do echo waiting for mysql service; sleep 2; done;']
+      containers:
+      - name: server
+        image: ramk2526/backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MYSQL_HOST
+          value: "database"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: backend-service
+  ports:
+  - name: service
+    port: 8080
+    targetPort: 8080
